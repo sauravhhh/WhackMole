@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Whack-a-Mole</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #87CEEB, #4682B4);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .info-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .info-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .game-board {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
+            background-color: #8B4513;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .hole {
+            position: absolute;
+            width: 30%;
+            height: 30%;
+            background-color: #654321;
+            border-radius: 50%;
+            box-shadow: inset 0 5px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .hole-1 { top: 10%; left: 10%; }
+        .hole-2 { top: 10%; left: 50%; transform: translateX(-50%); }
+        .hole-3 { top: 10%; right: 10%; }
+        .hole-4 { top: 50%; left: 10%; transform: translateY(-50%); }
+        .hole-5 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .hole-6 { top: 50%; right: 10%; transform: translateY(-50%); }
+        .hole-7 { bottom: 10%; left: 10%; }
+        .hole-8 { bottom: 10%; left: 50%; transform: translateX(-50%); }
+        .hole-9 { bottom: 10%; right: 10%; }
+        
+        .mole {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            background-color: #8B4513;
+            border-radius: 50% 50% 40% 40%;
+            top: 100%;
+            left: 10%;
+            transition: top 0.3s ease;
+            cursor: pointer;
+            z-index: 2;
+        }
+        
+        .mole::before {
+            content: '';
+            position: absolute;
+            width: 30%;
+            height: 30%;
+            background-color: black;
+            border-radius: 50%;
+            top: 30%;
+            left: 25%;
+        }
+        
+        .mole::after {
+            content: '';
+            position: absolute;
+            width: 30%;
+            height: 30%;
+            background-color: black;
+            border-radius: 50%;
+            top: 30%;
+            right: 25%;
+        }
+        
+        .mole-up {
+            top: 20%;
+        }
+        
+        .mole-hit {
+            background-color: #FF6347;
+            transition: background-color 0.2s;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 0 10px;
+        }
+        
+        .btn:hover {
+            background-color: #45a049;
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .game-message {
+            text-align: center;
+            font-size: 18px;
+            min-height: 25px;
+            margin-top: 10px;
+        }
+        
+        .difficulty-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .difficulty-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .difficulty-btn.active {
+            background-color: #FF8C00;
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 28px;
+            }
+            
+            .info-value {
+                font-size: 20px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>Whack-a-Mole</h1>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-box">
+                <div class="info-label">Score</div>
+                <div class="info-value" id="score">0</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Time</div>
+                <div class="info-value" id="time">30</div>
+            </div>
+        </div>
+        
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+            <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+            <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+        </div>
+        
+        <div class="game-board" id="game-board">
+            <div class="hole hole-1">
+                <div class="mole" data-hole="1"></div>
+            </div>
+            <div class="hole hole-2">
+                <div class="mole" data-hole="2"></div>
+            </div>
+            <div class="hole hole-3">
+                <div class="mole" data-hole="3"></div>
+            </div>
+            <div class="hole hole-4">
+                <div class="mole" data-hole="4"></div>
+            </div>
+            <div class="hole hole-5">
+                <div class="mole" data-hole="5"></div>
+            </div>
+            <div class="hole hole-6">
+                <div class="mole" data-hole="6"></div>
+            </div>
+            <div class="hole hole-7">
+                <div class="mole" data-hole="7"></div>
+            </div>
+            <div class="hole hole-8">
+                <div class="mole" data-hole="8"></div>
+            </div>
+            <div class="hole hole-9">
+                <div class="mole" data-hole="9"></div>
+            </div>
+        </div>
+        
+        <div class="game-controls">
+            <button class="btn" id="start-btn">Start Game</button>
+            <button class="btn" id="reset-btn">Reset</button>
+        </div>
+        
+        <div class="game-message" id="game-message">Select difficulty and click Start Game!</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const scoreElement = document.getElementById('score');
+            const timeElement = document.getElementById('time');
+            const gameMessageElement = document.getElementById('game-message');
+            const startBtn = document.getElementById('start-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const moles = document.querySelectorAll('.mole');
+            const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+            
+            // Game variables
+            let score = 0;
+            let timeLeft = 30;
+            let gameActive = false;
+            let timer = null;
+            let moleTimer = null;
+            let difficulty = 'easy';
+            let moleSpeed = 1500; // Default for easy
+            let activeMoles = new Set();
+            
+            // Difficulty settings
+            const difficultySettings = {
+                easy: { speed: 1500, time: 30 },
+                medium: { speed: 1000, time: 25 },
+                hard: { speed: 700, time: 20 }
+            };
+            
+            // Initialize game
+            function initGame() {
+                score = 0;
+                timeLeft = difficultySettings[difficulty].time;
+                moleSpeed = difficultySettings[difficulty].speed;
+                activeMoles.clear();
+                
+                updateUI();
+                gameMessageElement.textContent = 'Game in progress...';
+                
+                // Hide all moles
+                moles.forEach(mole => {
+                    mole.classList.remove('mole-up', 'mole-hit');
+                });
+                
+                // Start game
+                gameActive = true;
+                startBtn.disabled = true;
+                
+                // Start timers
+                timer = setInterval(updateTimer, 1000);
+                showRandomMole();
+            }
+            
+            // Update UI
+            function updateUI() {
+                scoreElement.textContent = score;
+                timeElement.textContent = timeLeft;
+            }
+            
+            // Update timer
+            function updateTimer() {
+                timeLeft--;
+                updateUI();
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }
+            
+            // Show random mole
+            function showRandomMole() {
+                if (!gameActive) return;
+                
+                // Get all moles that are not currently active
+                const inactiveMoles = Array.from(moles).filter(mole => !activeMoles.has(mole.dataset.hole));
+                
+                if (inactiveMoles.length > 0) {
+                    // Select a random inactive mole
+                    const randomMole = inactiveMoles[Math.floor(Math.random() * inactiveMoles.length)];
+                    const holeNumber = randomMole.dataset.hole;
+                    
+                    // Add to active set
+                    activeMoles.add(holeNumber);
+                    
+                    // Show the mole
+                    randomMole.classList.add('mole-up');
+                    
+                    // Hide the mole after a delay
+                    setTimeout(() => {
+                        randomMole.classList.remove('mole-up');
+                        activeMoles.delete(holeNumber);
+                    }, 1000);
+                }
+                
+                // Schedule next mole
+                moleTimer = setTimeout(showRandomMole, moleSpeed);
+            }
+            
+            // End game
+            function endGame() {
+                gameActive = false;
+                clearInterval(timer);
+                clearTimeout(moleTimer);
+                
+                // Hide all moles
+                moles.forEach(mole => {
+                    mole.classList.remove('mole-up', 'mole-hit');
+                });
+                
+                startBtn.disabled = false;
+                gameMessageElement.textContent = `Game Over! Your score: ${score}`;
+            }
+            
+            // Reset game
+            function resetGame() {
+                gameActive = false;
+                clearInterval(timer);
+                clearTimeout(moleTimer);
+                
+                score = 0;
+                timeLeft = difficultySettings[difficulty].time;
+                activeMoles.clear();
+                
+                updateUI();
+                
+                // Hide all moles
+                moles.forEach(mole => {
+                    mole.classList.remove('mole-up', 'mole-hit');
+                });
+                
+                startBtn.disabled = false;
+                gameMessageElement.textContent = 'Select difficulty and click Start Game!';
+            }
+            
+            // Mole whack
+            function whackMole(e) {
+                if (!gameActive) return;
+                
+                const mole = e.target;
+                if (!mole.classList.contains('mole-up')) return;
+                
+                // Add hit effect
+                mole.classList.add('mole-hit');
+                setTimeout(() => {
+                    mole.classList.remove('mole-hit');
+                }, 200);
+                
+                // Increase score
+                score += 10;
+                updateUI();
+                
+                // Hide the mole
+                mole.classList.remove('mole-up');
+                activeMoles.delete(mole.dataset.hole);
+            }
+            
+            // Change difficulty
+            function changeDifficulty(e) {
+                if (gameActive) return;
+                
+                // Update active button
+                difficultyBtns.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // Update difficulty
+                difficulty = e.target.dataset.difficulty;
+                timeLeft = difficultySettings[difficulty].time;
+                updateUI();
+                
+                gameMessageElement.textContent = `Difficulty set to ${difficulty}. Click Start Game!`;
+            }
+            
+            // Event listeners
+            startBtn.addEventListener('click', initGame);
+            resetBtn.addEventListener('click', resetGame);
+            moles.forEach(mole => mole.addEventListener('click', whackMole));
+            difficultyBtns.forEach(btn => btn.addEventListener('click', changeDifficulty));
+        });
+    </script>
+</body>
+  </html>
